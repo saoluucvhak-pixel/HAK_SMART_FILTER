@@ -10,7 +10,7 @@ const config = {
     { key: "branch", type: "enum", label: "Chi nhánh", match: (r, v) => r.branch === v },
     { key: "active", type: "bool", label: "Đang làm", match: r => r.active }
   ],
-  matchQ: (r, q) => core.hay([r.name], q)
+  matchQ: (r, q) => core.hay([r.name]).includes(q)
 };
 const rows = [
   { name: "Nguyễn Văn An", status: "Đã duyệt", branch: "DN", active: true },
