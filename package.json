@@ -1,0 +1,28 @@
+{
+  "name": "@hak/smart-filter",
+  "version": "1.0.0",
+  "description": "Framework-agnostic HAK Smart Filter engine with optional browser UI adapters",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./core": "./core/smart-filter.js",
+    "./browser": "./browser.js"
+  },
+  "files": [
+    "index.js",
+    "core",
+    "ui",
+    "browser.js",
+    "docs",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check index.js && node --check browser.js && node --check core/smart-filter.js && node --check ui/smart-filter.js && node --check ui/filter-popover.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
