@@ -1,4 +1,4 @@
-# HAK Smart Filter v1.0.0
+# HAK Smart Filter v1.1.0
 
 Thư viện lọc dữ liệu dùng chung cho các ứng dụng HAK. Core không yêu cầu DOM, Electron hoặc framework giao diện.
 
@@ -59,3 +59,27 @@ CI chạy trên Node.js 18, 20 và 22. Trạng thái phát hành phải căn c�
 - Preset cần storage có `getItem`/`setItem`, có thể dùng localStorage hoặc adapter riêng.
 - Không ghi dữ liệu nhân sự hoặc thông tin nhạy cảm vào repository.
 - `private:true` trong package.json: chưa phát hành công khai lên npm; có thể dùng dependency GitHub sau khi CI đạt và gắn tag phát hành.
+
+## Truy vấn có kiểu (V12) và ảnh chụp dùng chung — mới ở v1.1.0
+
+Chuyển từ `LUONG_HAK`, nhánh `feature/hak-shared-filter-report-v12` (commit `b4aff3d`): `query-v12.js` và `smart-filter-adapter.js` gộp thành `core/query.js`.
+
+```js
+const { queryRows, createSnapshot, query } = require("@hak/smart-filter");
+
+// Cây điều kiện AND/OR; chỉ trường trong `fields` mới được lọc — trường/toán tử lạ bị TỪ CHỐI, không âm thầm bỏ qua
+const q = { logic: "AND", conditions: [
+  { field: "ncc", op: "contains", value: "dai hiep" },             // không phân biệt dấu
+  { logic: "OR", conditions: [{ field: "kl", op: "gte", value: 10 }, { field: "pb", op: "in", value: ["DN", "QN"] }] },
+] };
+const r = queryRows(rows, q, { fields: ["ncc", "kl", "pb"], canRead: row => quyen.has(row.pb), sort: { field: "kl", direction: "desc" }, page: 1, pageSize: 50 });
+// r.totalAuthorized (được phép xem) ≠ r.totalMatched (khớp lọc)
+
+// Ảnh chụp: màn hình, Excel, PDF, in đọc CÙNG một snapshot → cùng tập dòng, cùng mô tả điều kiện
+const snap = createSnapshot({ rows, query: q, fields: [...], canRead, idField: "id", labels: { ncc: "Nhà cung cấp" } });
+// hoặc từ bộ lọc V10.3: createSnapshot({ rows, filter: createFilter(cfg), canRead, idField: "id" })
+query.sameAsSnapshot(snap, rowsDaXuatExcel, "id"); // true nếu bản xuất đúng y tập dòng & thứ tự
+```
+
+Toán tử: `eq ne gt gte lt lte contains in between empty notEmpty`. Giới hạn: lồng ≤ 12 cấp, ≤ 100 điều kiện mỗi nhóm.
+`describeQuery(q, labels)` viết điều kiện bằng tiếng Việt cho chip, dòng kết quả và tiêu đề báo cáo.

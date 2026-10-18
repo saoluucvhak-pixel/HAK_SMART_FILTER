@@ -5,7 +5,8 @@
  * @typedef {{q:string,tu:string,den:string,ky:string,sel:Object,one:Object,flag:Object}} FilterState
  */
 const core = require("./core/smart-filter.js");
-const VERSION = "1.0.0";
+const query = require("./core/query.js");
+const VERSION = "1.1.0";
 
 function validateConfig(config) {
   if (!config || typeof config !== "object") throw new TypeError("config is required");
@@ -80,4 +81,4 @@ function createFilter(config, options = {}) {
     listPresets(storage) { return core.presets(storage).list(config.screenId); }
   });
 }
-module.exports = Object.freeze({ VERSION, createFilter, validateConfig, core });
+module.exports = Object.freeze({ VERSION, createFilter, validateConfig, core, query, queryRows: query.queryRows, createSnapshot: query.createSnapshot });
