@@ -63,3 +63,42 @@ test("presets save and restore by screen", () => {
   f.reset(); const result = f.loadPreset("DN", storage);
   assert.equal(result.ok, true); assert.equal(f.getState().one.branch, "DN");
 });
+
+function fakeStorage(initial) {
+  const m = Object.assign({}, initial);
+  return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, dump: k => m[k] };
+}
+test("presets: kho khác phiên bản/hỏng KHÔNG bị ghi đè khi lưu", () => {
+  const newer = JSON.stringify({ schema: 2, screens: { test: { keep: { state: { q: "x" } } } } });
+  const st = fakeStorage({ "hak.sf.presets": newer });
+  const p = core.presets(st);
+  assert.equal(p.isCorrupt(), true);
+  const r = p.save("test", "moi", { q: "y" });
+  assert.equal(r.ok, false);
+  assert.equal(r.corrupt, true);
+  assert.equal(st.dump("hak.sf.presets"), newer);            // nguyên vẹn
+  assert.equal(p.remove("test", "keep"), false);
+  assert.equal(st.dump("hak.sf.presets"), newer);
+  const f = createFilter(config); f.setField("active", true);
+  assert.equal(f.savePreset("moi", st).ok, false);            // qua API headless cũng vậy
+  assert.equal(st.dump("hak.sf.presets"), newer);
+});
+test("presets: JSON hỏng cũng được giữ nguyên; discardCorrupt sao lưu rồi mới tạo kho mới", () => {
+  const st = fakeStorage({ "hak.sf.presets": "{not json" });
+  const p = core.presets(st);
+  assert.equal(p.save("test", "a", { q: "1" }).ok, false);
+  assert.equal(st.dump("hak.sf.presets"), "{not json");
+  const d = p.discardCorrupt();
+  assert.deepEqual([d.ok, d.backedUp], [true, true]);
+  assert.equal(st.dump("hak.sf.presets.bak"), "{not json");
+  assert.equal(p.isCorrupt(), false);
+  assert.equal(p.save("test", "a", { q: "1" }).ok, true);
+  assert.deepEqual(p.list("test"), ["a"]);
+  assert.equal(p.discardCorrupt().backedUp, false);           // kho tốt: không làm gì
+});
+test("presets: kho tốt/trống vẫn lưu bình thường", () => {
+  const p = core.presets(fakeStorage({}));
+  assert.equal(p.isCorrupt(), false);
+  assert.equal(p.save("test", "a", { q: "1" }).ok, true);
+  assert.equal(p.remove("test", "a"), true);
+});
