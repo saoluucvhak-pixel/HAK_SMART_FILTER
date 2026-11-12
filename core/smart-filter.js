@@ -172,11 +172,19 @@
       get: function (screenId, name) { var p = (load().screens[screenId] || {})[name]; return p ? p : null; },
       save: function (screenId, name, state, now) {
         name = str(name); if (!name) return { ok: false, msg: "Chưa đặt tên bộ lọc" };
-        var o = load(); (o.screens[screenId] = o.screens[screenId] || {})[name] = { state: normalize(state), savedAt: now || new Date().toISOString() };
+        var o = load();
+        if (o.corrupt) return { ok: false, corrupt: true, msg: "Kho bộ lọc đã lưu bị lỗi hoặc thuộc phiên bản khác — không ghi đè. Dùng discardCorrupt() để sao lưu bản cũ rồi tạo kho mới." }; (o.screens[screenId] = o.screens[screenId] || {})[name] = { state: normalize(state), savedAt: now || new Date().toISOString() };
         return save(o) ? { ok: true } : { ok: false, msg: "Không lưu được bộ lọc trên máy này" };
       },
-      remove: function (screenId, name) { var o = load(); if (!o.screens[screenId] || !o.screens[screenId][name]) return false; delete o.screens[screenId][name]; return save(o); },
+      remove: function (screenId, name) { var o = load(); if (o.corrupt) return false; if (!o.screens[screenId] || !o.screens[screenId][name]) return false; delete o.screens[screenId][name]; return save(o); },
       isCorrupt: function () { return !!load().corrupt; },
+      /** Kho lỗi/khác phiên bản: chép nguyên văn sang khóa "<PRESET_KEY>.bak" (không mất dữ liệu) rồi mới tạo kho trống. */
+      discardCorrupt: function () {
+        if (!load().corrupt) return { ok: true, backedUp: false };
+        var raw; try { raw = storage.getItem(PRESET_KEY); } catch (e) { return { ok: false, msg: "Không đọc được kho bộ lọc" }; }
+        try { storage.setItem(PRESET_KEY + ".bak", raw); storage.setItem(PRESET_KEY, JSON.stringify({ schema: SCHEMA, screens: {} })); } catch (e) { return { ok: false, msg: "Không sao lưu được kho bộ lọc cũ" }; }
+        return { ok: true, backedUp: true, backupKey: PRESET_KEY + ".bak" };
+      },
       legacyNames: function () { return Object.keys(legacy()).sort(); },
       legacyGet: function (name) { var o = legacy(); return Object.prototype.hasOwnProperty.call(o, name) ? { legacy: o[name] } : null; }
     };

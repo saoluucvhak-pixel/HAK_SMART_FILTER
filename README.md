@@ -57,5 +57,6 @@ CI chạy trên Node.js 18, 20 và 22. Trạng thái phát hành phải căn c�
 - Chế độ mặc định `strict` báo lỗi nếu có điều kiện không được cấu hình matcher; dùng `{strict:false}` chỉ khi ứng dụng có cơ chế hiển thị cảnh báo `unsupported`.
 - Trạng thái được chuẩn hóa, từ chối khoảng ngày đảo ngược.
 - Preset cần storage có `getItem`/`setItem`, có thể dùng localStorage hoặc adapter riêng.
+- Kho preset hỏng hoặc thuộc phiên bản schema khác **không bị ghi đè**: `save` trả `{ ok:false, corrupt:true, msg }`, `remove` trả `false`. Gọi `core.presets(storage).discardCorrupt()` để chép nguyên văn kho cũ sang khóa `hak.sf.presets.bak` rồi tạo kho mới.
 - Không ghi dữ liệu nhân sự hoặc thông tin nhạy cảm vào repository.
 - `private:true` trong package.json: chưa phát hành công khai lên npm; có thể dùng dependency GitHub sau khi CI đạt và gắn tag phát hành.
