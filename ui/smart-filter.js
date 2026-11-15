@@ -108,7 +108,15 @@
       // Kho bộ lọc đã lưu bị lỗi hoặc do phiên bản khác ghi: không ghi đè; cho người dùng tự quyết định sao lưu rồi tạo kho mới.
       if (ps.isCorrupt()) {
         note.textContent = "⚠ Kho bộ lọc đã lưu trên máy này bị lỗi hoặc do phiên bản khác tạo, nên chưa lưu hay xóa bộ lọc được. Dữ liệu lương không bị ảnh hưởng.";
-        box.appendChild(h("div", { class: "bar", style: "margin:4px 0 0", "data-sf-corrupt": "1" }, [btn("Sao lưu kho cũ và tạo kho mới", "ghost", function () {
+        var exportRaw = btn("Tải bản sao kho bộ lọc", "ghost", function () {
+          var raw = ps.readCorrupt();
+          if (raw === null) { A.toast("⚠ Không đọc được kho bộ lọc cũ"); return; }
+          var url = root.URL.createObjectURL(new root.Blob([raw], { type: "text/plain;charset=utf-8" }));
+          var link = h("a", { href: url, download: "BoLocHAK-" + new Date().toISOString().replace(/[:.]/g, "-") + ".txt" });
+          document.body.appendChild(link); link.click(); link.remove();
+          root.setTimeout(function () { root.URL.revokeObjectURL(url); }, 1000);
+        });
+        box.appendChild(h("div", { class: "bar", style: "margin:4px 0 0", "data-sf-corrupt": "1" }, [exportRaw, btn("Sao lưu kho cũ và tạo kho mới", "ghost", function () {
           var r = ps.discardCorrupt(); A.toast(r.ok ? "Đã sao lưu kho bộ lọc cũ và tạo kho mới" : "⚠ " + r.msg); rerender();
         }, "Bản cũ được giữ nguyên ở một khóa sao lưu trên máy này")]));
       }
