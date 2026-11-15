@@ -90,7 +90,7 @@ test("presets: JSON hỏng cũng được giữ nguyên; discardCorrupt sao lưu
   assert.equal(st.dump("hak.sf.presets"), "{not json");
   const d = p.discardCorrupt();
   assert.deepEqual([d.ok, d.backedUp], [true, true]);
-  assert.equal(st.dump("hak.sf.presets.bak"), "{not json");
+  assert.equal(st.dump(d.backupKey), "{not json");
   assert.equal(p.isCorrupt(), false);
   assert.equal(p.save("test", "a", { q: "1" }).ok, true);
   assert.deepEqual(p.list("test"), ["a"]);
@@ -101,4 +101,17 @@ test("presets: kho tốt/trống vẫn lưu bình thường", () => {
   assert.equal(p.isCorrupt(), false);
   assert.equal(p.save("test", "a", { q: "1" }).ok, true);
   assert.equal(p.remove("test", "a"), true);
+});
+
+test("presets: can export corruption without resetting and repeated resets retain each backup", () => {
+  const st = fakeStorage({ "hak.sf.presets": "first" });
+  const p = core.presets(st);
+  assert.equal(p.readCorrupt(), "first");
+  assert.equal(st.dump("hak.sf.presets"), "first");
+  const first = p.discardCorrupt();
+  st.setItem("hak.sf.presets", "second");
+  const second = p.discardCorrupt();
+  assert.notEqual(first.backupKey, second.backupKey);
+  assert.equal(st.dump(first.backupKey), "first");
+  assert.equal(st.dump(second.backupKey), "second");
 });
